@@ -1,0 +1,38 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/hh/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/hh/catkin_ws/src/github/bow3d/include/**",
+        "/home/hh/catkin_ws/src/hpa/amp_prediction/include/**",
+        "/home/hh/catkin_ws/src/apa/apa_slam/include/**",
+        "/home/hh/catkin_ws/src/common/camera_model/include/**",
+        "/home/hh/catkin_ws/src/hpa/hpa_slam/include/**",
+        "/home/hh/catkin_ws/src/hvp/hvp_lidar_calib/include/**",
+        "/opt/ros/noetic/share/julius/include/**",
+        "/home/hh/catkin_ws/src/hpa/hpa_lslam/include/**",
+        "/home/hh/catkin_ws/src/github/LeGO-LOAM/LeGO-LOAM/include/**",
+        "/home/hh/catkin_ws/src/common/linux_can/include/**",
+        "/home/hh/catkin_ws/src/hpa/map_io/include/**",
+        "/home/hh/catkin_ws/src/noa/MapLocation/include/**",
+        "/home/hh/catkin_ws/src/noa/ob_gins/include/**",
+        "/home/hh/catkin_ws/src/hpa/hpa_vslam/include/**",
+        "/home/hh/catkin_ws/src/noa/pilot_view/include/**",
+        "/home/hh/catkin_ws/src/hpa/hpa_semantic_slam/include/**",
+        "/home/hh/catkin_ws/src/apa/zmq2ros/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
