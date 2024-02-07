@@ -125,7 +125,7 @@ def generate_test_numpy_arrays(input_form, word_count_table):
     return input_np
 
 
-def generate_training_arrays_A(input_data, word_count_table, numpy_array_path):
+def generate_training_arrays(input_data, word_count_table, numpy_array_path):
     table_1 = []
     table_2 = []
     i = 0
@@ -196,7 +196,7 @@ def generate_training_arrays_A(input_data, word_count_table, numpy_array_path):
         return input_forms
 
 
-def generate_test_numpy_array_A(input_forms, word_count_table):
+def generate_test_numpy_array(input_forms, word_count_table):
     table_3 = []
     temp = ""
     for char in input_forms:

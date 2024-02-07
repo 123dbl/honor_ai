@@ -3,17 +3,17 @@ from run_assist import *
 import os
 import time
 
-## Json file check
-# with open('./json/词_数表.json', 'rb') as f:
-#     data = json.load(f)
+## config file check
+# with open('./config/词_数表.config', 'rb') as f:
+#     data = config.load(f)
 #     print(data)
-# with open('./json/数_词表.json', 'rb') as f:
-#     data = json.load(f)
+# with open('./config/数_词表.config', 'rb') as f:
+#     data = config.load(f)
 #     print(data)
-# with open('./json/名称_编号.json', 'rb') as f:
-#     data = json.load(f)
+# with open('./config/名称_编号.config', 'rb') as f:
+#     data = config.load(f)
 #     print(data)
-with open('./json/名称_操作.json', 'rb') as f:
+with open('./config/id_action.config', 'rb') as f:
     data = json.load(f)
     print(data)
 
@@ -30,7 +30,7 @@ with open('./json/名称_操作.json', 'rb') as f:
 #     time.sleep(1)
 
 
-## Establish a local json file for the local cell phone layout in game
+## Establish a local config file for the local cell phone layout in game
 ## d <contact> <x> <y> <pressure>
 ## m <contact> <x> <y> <pressure>
 ## see more touch commands in minitouch repo: https://github.com/openstf/minitouch
@@ -98,10 +98,10 @@ dict_layout = {
 #     # 设备.发送('d 1 240 430 300\nc\nm 1 370 430 100\nc\n')
 #     time.sleep(1)
 
-with open('./json/local_layout.json', 'w') as json_file:
-    json.dump(dict_layout, json_file)
+with open('./config/local_layout.config', 'w') as config_file:
+    json.dump(dict_layout, config_file)
 
-with open('./json/local_layout.json', 'rb') as f:
+with open('./config/local_layout.config', 'rb') as f:
     data = json.load(f)
     print(data)
 

@@ -1,12 +1,12 @@
 import os
 import time
 import torchvision
-from config import GPT2Config, TransformerConfig
-from Batch import create_masks
-from ModelA import get_model
+from model.config import GPT2Config, TransformerConfig
+from model.batch import create_masks
+from model.model import get_model
 import torch.nn.functional as F
-from 取训练数据 import *
-from 杂项 import *
+from get_train_data import *
+from scripts.utils import *
 import random
 from resnet_utils import myResnet
 from run_assist import *
@@ -46,10 +46,8 @@ operation_col = []
 
 def get_key_name(key):
     if isinstance(key, keyboard.KeyCode):
-
         return key.char
     else:
-
         return str(key)
 
 
@@ -70,7 +68,7 @@ def on_press(key):
     elif key_name == "q":
         press_q = True
     elif key_name == "i":
-        ai_on = bool(1 - ai_on)
+        ai_on = not ai_on
 
     elif key_name == "Key.space":
         operation = "召唤师技能"
@@ -123,7 +121,6 @@ def on_release(key):
         press_q = False
 
     elif key_name == "Key.up":
-
         attack_status = False
     print("已经释放:", key_name)
     if key == Key.esc:
@@ -137,7 +134,7 @@ def start_listen():
         listener.join()
 
 
-def 处理方向():
+def process_direction():
     # press_w = False
     # press_s = False
     # press_a = False
@@ -164,12 +161,12 @@ def 处理方向():
         return ""
 
 
-加三技能 = "d 0 552 1878 100\nc\nu 0\nc\n"
-加二技能 = "d 0 446 1687 100\nc\nu 0\nc\n"
-加一技能 = "d 0 241 1559 100\nc\nu 0\nc\n"
-购买 = "d 0 651 207 100\nc\nu 0\nc\n"
-词数词典路径 = "./json/词_数表.json"
-数_词表路径 = "./json/数_词表.json"
+upgrade_3rd_skill = "d 0 552 1878 100\nc\nu 0\nc\n"
+upgrade_2nd_skill = "d 0 446 1687 100\nc\nu 0\nc\n"
+upgrade_1st_skill = "d 0 241 1559 100\nc\nu 0\nc\n"
+shopping = "d 0 651 207 100\nc\nu 0\nc\n"
+cmd_id_path = "./config/cmd_id.json"
+id_cmd_path = "./config/id_cmd.json"
 operation查询路径 = "./json/名称_operation.json"
 operation词典 = {"图片号": "0", "移动operation": "无移动", "动作operation": "无动作"}
 th = threading.Thread(
@@ -177,17 +174,17 @@ th = threading.Thread(
 )
 th.start()  # 启动线程
 
-if os.path.isfile(词数词典路径) and os.path.isfile(数_词表路径):
-    词_数表, 数_词表 = 读出引索(词数词典路径, 数_词表路径)
-with open(词数词典路径, encoding="utf8") as f:
-    词数词典 = json.load(f)
+if os.path.isfile(id_cmd_path) and os.path.isfile(cmd_id_path):
+    cmd_id, id_cmd = read_index(cmd_id_path, id_cmd_path)
+with open(id_cmd_path, encoding="utf8") as f:
+    id_cmd_dict = json.load(f)
 with open(operation查询路径, encoding="utf8") as f:
     operation查询词典 = json.load(f)
 
 方向表 = ["上移", "下移", "左移", "右移", "左上移", "左下移", "右上移", "右下移"]
 
 
-设备 = MyMNTDevice(_DEVICE_ID)
+device = MyMNTDevice(_DEVICE_ID)
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 mod = (
     torchvision.models.resnet101(pretrained=True)
@@ -205,51 +202,40 @@ model = model.cuda(device).requires_grad_(False)
 while True:
     if ai_on:
 
-        图片路径 = train_dir + "/{}/".format(str(int(time.time())))
-        os.mkdir(图片路径)
+        img_path = train_dir + "/{}/".format(str(int(time.time())))
+        os.mkdir(img_path)
 
-        记录文件 = open(图片路径 + "_operation数据.json", "w+")
+        record_file = open(img_path + "_operation_data.json", "w+")
 
-        图片张量 = torch.Tensor(0)
-        operation张量 = torch.Tensor(0)
+        img_tensor = torch.Tensor(0)
+        operation_tensor = torch.Tensor(0)
 
-        伪词序列 = (
+        pseudo_word_seq = (
             torch.from_numpy(np.ones((1, 60)).astype(np.int64))
             .cuda(device)
             .unsqueeze(0)
         )
 
-        指令延时 = 0
+        cmd_delay = 0
 
-        operation序列 = np.ones((1,))
-        operation序列[0] = 128
-        计数 = 0
+        operation_seq = np.ones((1,))
+        operation_seq[0] = 128
+        counter = 0
         time_start = time.time()
-        旧指令 = "移动停"
+        pre_cmd = "移动停"
         for i in range(1000000):
             if ai_on == False:
                 break
             try:
-                imgA = 取图(window_name)
+                imgA = get_img(window_name)
             except:
                 ai_on = False
                 print("取图失败")
                 break
 
-            计时开始 = time.time()
+            start_timing = time.time()
 
-            if 图片张量.shape[0] == 0:
-
-                img = np.array(imgA)
-
-                img = (
-                    torch.from_numpy(img).cuda(device).unsqueeze(0).permute(0, 3, 2, 1)
-                    / 255
-                )
-                _, out = resnet101(img)
-                图片张量 = out.reshape(1, 6 * 6 * 2048)
-
-            elif 图片张量.shape[0] < 19:
+            if img_tensor.shape[0] == 0:
 
                 img = np.array(imgA)
 
@@ -258,8 +244,19 @@ while True:
                     / 255
                 )
                 _, out = resnet101(img)
-                图片张量 = torch.cat((图片张量, out.reshape(1, 6 * 6 * 2048)), 0)
-                operation序列 = np.append(operation序列, 抽样np[0, 0])
+                img_tensor = out.reshape(1, 6 * 6 * 2048)
+
+            elif img_tensor.shape[0] < 19:
+
+                img = np.array(imgA)
+
+                img = (
+                    torch.from_numpy(img).cuda(device).unsqueeze(0).permute(0, 3, 2, 1)
+                    / 255
+                )
+                _, out = resnet101(img)
+                img_tensor = torch.cat((img_tensor, out.reshape(1, 6 * 6 * 2048)), 0)
+                operation_seq = np.append(operation_seq, 抽样np[0, 0])
 
             else:
 
@@ -270,31 +267,31 @@ while True:
                     / 255
                 )
                 _, out = resnet101(img)
-                图片张量 = 图片张量[0:18, :]
-                operation序列 = operation序列[0:18]
-                operation序列 = np.append(operation序列, 抽样np[0, 0])
-                图片张量 = torch.cat((图片张量, out.reshape(1, 6 * 6 * 2048)), 0)
+                img_tensor = img_tensor[0:18, :]
+                operation_seq = operation_seq[0:18]
+                operation_seq = np.append(operation_seq, 抽样np[0, 0])
+                img_tensor = torch.cat((img_tensor, out.reshape(1, 6 * 6 * 2048)), 0)
 
-            operation张量 = torch.from_numpy(operation序列.astype(np.int64)).cuda(device)
+            operation_tensor = torch.from_numpy(operation_seq.astype(np.int64)).cuda(device)
             src_mask, trg_mask = create_masks(
-                operation张量.unsqueeze(0), operation张量.unsqueeze(0), device
+                operation_tensor.unsqueeze(0), operation_tensor.unsqueeze(0), device
             )
-            输出_实际_A = model(图片张量.unsqueeze(0), operation张量.unsqueeze(0), trg_mask)
+            输出_实际_A = model(img_tensor.unsqueeze(0), operation_tensor.unsqueeze(0), trg_mask)
 
-            LI = operation张量.contiguous().view(-1)
+            LI = operation_tensor.contiguous().view(-1)
             # LA=输出_实际_A.view(-1, 输出_实际_A.size(-1))
-            if 计数 % 50 == 0 and 计数 != 0:
+            if counter % 50 == 0 and counter != 0:
 
-                设备.发送(购买)
-                设备.发送(加三技能)
-                设备.发送(加二技能)
-                设备.发送(加一技能)
-                设备.发送(operation查询词典["移动停"])
-                print(旧指令, "周期")
+                device.send(shopping)
+                device.send(upgrade_3rd_skill)
+                device.send(upgrade_2nd_skill)
+                device.send(upgrade_1st_skill)
+                device.send(operation查询词典["移动停"])
+                print(pre_cmd, "周期")
                 time.sleep(0.02)
-                设备.发送(operation查询词典[旧指令])
+                device.send(operation查询词典[pre_cmd])
 
-            if 计数 % 1 == 0:
+            if counter % 1 == 0:
                 time_end = time.time()
 
                 输出_实际_A = F.softmax(输出_实际_A, dim=-1)
@@ -307,7 +304,7 @@ while True:
 
                 # operation词典 = {"图片号": "0", "移动operation": "无移动", "动作operation": "无动作"}
                 operation词典["图片号"] = str(i)
-                方向结果 = 处理方向()
+                方向结果 = process_direction()
                 if 方向结果 != "" or len(operation_col) != 0 or attack_status == True:
                     if 方向结果 == "":
                         operation词典["移动operation"] = 指令集[0]
@@ -325,23 +322,23 @@ while True:
                     else:
                         operation词典["动作operation"] = "无动作"
 
-                    路径_a = 图片路径 + "{}.jpg".format(str(i))
+                    路径_a = img_path + "{}.jpg".format(str(i))
                     imgA.save(路径_a)
-                    json.dump(operation词典, 记录文件, ensure_ascii=False)
-                    记录文件.write("\n")
+                    json.dump(operation词典, record_file, ensure_ascii=False)
+                    record_file.write("\n")
 
                     新指令 = operation词典["移动operation"]
-                    if 新指令 != 旧指令 and 新指令 != "无移动":
-                        旧指令 = 新指令
-                        # print(旧指令,operation查询词典[旧指令])
+                    if 新指令 != pre_cmd and 新指令 != "无移动":
+                        pre_cmd = 新指令
+                        # print(pre_cmd,operation查询词典[pre_cmd])
                         try:
-                            print("manual_mode", 旧指令)
+                            print("manual_mode", pre_cmd)
 
-                            设备.发送(operation查询词典[旧指令])
+                            device.send(operation查询词典[pre_cmd])
 
                         except:
                             ai_on = False
-                            print("发送失败")
+                            print("send失败")
                             break
 
                         time.sleep(0.01)
@@ -354,10 +351,10 @@ while True:
                     ):
                         print("手动", 指令集[1])
                         try:
-                            设备.发送(operation查询词典[operation词典["动作operation"]])
+                            device.send(operation查询词典[operation词典["动作operation"]])
                         except:
                             ai_on = False
-                            print("发送失败")
+                            print("send失败")
                             break
                 else:
                     operation_col = []
@@ -365,17 +362,17 @@ while True:
                     operation词典["动作operation"] = 指令集[1]
 
                     新指令 = 指令集[0]
-                    if 新指令 != 旧指令 and 新指令 != "无移动":
-                        旧指令 = 新指令
-                        # print(旧指令,operation查询词典[旧指令])
+                    if 新指令 != pre_cmd and 新指令 != "无移动":
+                        pre_cmd = 新指令
+                        # print(pre_cmd,operation查询词典[pre_cmd])
                         try:
-                            print(旧指令)
+                            print(pre_cmd)
 
-                            设备.发送(operation查询词典[旧指令])
+                            device.send(operation查询词典[pre_cmd])
 
                         except:
                             ai_on = False
-                            print("发送失败")
+                            print("send失败")
                             break
 
                         time.sleep(0.01)
@@ -388,20 +385,20 @@ while True:
                     ):
                         print(指令集[1])
                         try:
-                            设备.发送(operation查询词典[指令集[1]])
+                            device.send(operation查询词典[指令集[1]])
                         except:
                             ai_on = False
-                            print("发送失败")
+                            print("send失败")
                             break
-                用时1 = 0.22 - (time.time() - 计时开始)
+                用时1 = 0.22 - (time.time() - start_timing)
                 if 用时1 > 0:
                     time.sleep(用时1)
 
                 用时 = time_end - time_start
-                # print("用时{} 第{}张 延时{}".format(用时, i,用时1),'press_a', press_a, 'press_w', press_w, 'press_s', press_s, 'press_d', press_d, '旧指令', 旧指令, 'ai_on', ai_on, 'operation_col', operation_col)
+                # print("用时{} 第{}张 延时{}".format(用时, i,用时1),'press_a', press_a, 'press_w', press_w, 'press_s', press_s, 'press_d', press_d, 'pre_cmd', pre_cmd, 'ai_on', ai_on, 'operation_col', operation_col)
 
-                计数 = 计数 + 1
+                counter = counter + 1
 
-    记录文件.close()
+    record_file.close()
     time.sleep(1)
     print("ai_on", ai_on)

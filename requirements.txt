@@ -3,5 +3,4 @@ torchvision==0.11.3+cu111
 torchaudio==0.10.2+cu111
 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 pyminitouch
-scrcpy
 pynput
